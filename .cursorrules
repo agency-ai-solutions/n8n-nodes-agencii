@@ -1,0 +1,149 @@
+# n8n Community Node Integration for Agencii Chat Response API
+
+## Project Identity
+
+This is an n8n community node integration for the native Agencii chat response API.
+
+**Primary node**: `Integration` with two core actions:
+
+1. **Get Response** - Generate a completion with optional chat reuse
+2. **Create New Chat** - Explicitly initialize a new chat/session
+
+## Project Objectives
+
+- Keep scope focused on Agencii chat response use cases
+- Make n8n usage simple:
+  - Single-call completions via **Get Response**
+  - Multi-step conversational flows via **Create New Chat → Get Response**
+- Ensure reliability:
+  - Strong typing, clear errors, and predictable outputs for downstream n8n nodes
+
+## Core Workflows
+
+### Workflow 1: Single Completion (`Get Response`)
+
+**Action**: `Get Response` (Generate completion)
+
+**Inputs**:
+
+- `prompt` (required): Main text input for completion
+- `chatId` (optional, string): Existing chat identifier from previous `Create New Chat` or `Get Response` output
+
+**Behavior**:
+
+- If `chatId` is provided:
+  - Use it as the chat identifier in the Agencii request
+  - Generate completion in the context of that existing chat
+- If `chatId` is NOT provided:
+  - Call Agencii to implicitly create a new chat
+  - Capture and return the newly created chat identifier
+
+**Outputs to n8n**:
+
+- `text` or `response`: Completion content
+- `chatId`: The chat identifier used (incoming or newly created)
+- Optional: `usage`, `metadata`, `model`, or other Agencii-provided fields
+
+### Workflow 2: Explicit Chat Creation (`Create New Chat` → `Get Response`)
+
+**Action**: `Create New Chat`
+
+**Behavior**:
+
+- Explicitly create a chat/session with Agencii
+- Return a `chatId` and key metadata for subsequent calls
+
+**Typical usage**:
+
+- Step 1: `Create New Chat` → store `chatId` in n8n context
+- Step 2+: One or more `Get Response` actions reusing that `chatId` for multi-turn conversations
+
+## Development Rules
+
+### Always Follow Workspace-Level Rules
+
+**1-3-1 when stuck**:
+
+- Define 1 clear problem, 3 options, and 1 recommendation
+- Wait for user confirmation before implementing any option
+
+**DRY (Don't Repeat Yourself)**:
+
+- Do not duplicate logic across handlers
+- Centralize shared Agencii client, auth, and error handling in utilities
+
+**TDD (Test-Driven Development)**:
+
+- Before new features or behavior changes, inspect and update/add tests first
+- Prefer small, focused tests around request shaping and response mapping
+
+**Todo-first**:
+
+- Create or update a todo list at the start of each significant task
+
+**Ultrathink**:
+
+- Think through API shapes, UX, and future extensibility before coding
+
+### File and Responsibility Structure
+
+**Node definition**:
+
+- Keep `Integration.node.ts` focused on node description, routing to resources, and wiring n8n parameters to handlers
+
+**Resources**:
+
+- Place action-specific logic under `nodes/Integration/resources/**` (e.g., `user`, `company`, etc.)
+- Each resource/action handler should:
+  - Map n8n parameters → Agencii request
+  - Call a shared Agencii client
+  - Map Agencii response → clean n8n JSON output
+
+**Shared utilities**:
+
+- Create and maintain reusable helpers for:
+  - HTTP client configuration and auth to Agencii
+  - Error normalization
+  - Common types and interfaces
+
+### Coding Standards
+
+- Use **TypeScript** with strong typing; prefer `unknown` + narrowing over `any`
+- Keep functions small, pure where possible, and side-effect boundaries clear (HTTP calls, n8n helpers)
+- Maintain consistent naming:
+  - Actions: `getResponse`, `createNewChat` (internal) with human-readable labels in node UI
+  - Parameters: `prompt`, `chatId`, etc., matching both n8n conventions and Agencii semantics
+- Always validate assumptions from Agencii responses (e.g., presence of `id` or `text`) before using them
+
+### Testing Expectations
+
+For every new or modified action:
+
+- Add or update tests to verify:
+  - Correct endpoint and HTTP method
+  - Accurate mapping of n8n parameters to Agencii request payload and query params
+  - Proper extraction and naming of key response fields (e.g., `chatId`, `text`)
+  - Graceful handling of error shapes from Agencii
+- Prefer deterministic tests with mocked HTTP responses
+
+### Documentation & UX
+
+Keep `README.md` updated with:
+
+- Simple setup steps for configuring Agencii credentials
+- Examples:
+  - Workflow 1: Single completion via `Get Response`
+  - Workflow 2: `Create New Chat` → `Get Response` for multi-turn conversations
+- Any breaking changes or new actions
+
+Node parameter descriptions should:
+
+- Use plain, non-jargony language
+- Explain what each field does in terms of the user's workflow (not just the underlying API)
+
+### Guardrails
+
+- Never commit secrets, tokens, or live credentials
+- Never manually edit compiled artifacts in `dist/**`; always use the build pipeline
+- Prefer backwards-compatible changes; if breaking changes are required, document them clearly
+- Avoid API-specific magic values; expose them as parameters where possible or clearly document defaults/fixed values
