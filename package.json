@@ -31,11 +31,17 @@
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "n8n": {
     "n8nNodesApiVersion": 1,
-    "credentials": ["dist/credentials/AgenciiApi.credentials.js"],
-    "nodes": ["dist/nodes/Integration/Integration.node.js"]
+    "credentials": [
+      "dist/credentials/AgenciiApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Integration/Integration.node.js"
+    ]
   },
   "devDependencies": {
     "@n8n/node-cli": "*",
@@ -44,5 +50,7 @@
     "release-it": "^19.0.4",
     "typescript": "5.9.2"
   },
-  "peerDependencies": { "n8n-workflow": "*" }
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
 }
