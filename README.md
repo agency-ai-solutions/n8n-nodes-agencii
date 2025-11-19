@@ -183,7 +183,7 @@ This node uses n8n's declarative routing feature for simplified API integration.
 
 For issues, questions, or feature requests:
 
-- Open an issue on [GitHub](https://github.com/agency-ai-solutions/n8n-community-node-integration/issues)
+- Open an issue on [GitHub](https://github.com/agency-ai-solutions/n8n-nodes-agencii/issues)
 - Join the [n8n community](https://community.n8n.io/)
 
 ## Version History
