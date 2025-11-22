@@ -1,11 +1,11 @@
 import type { INodeProperties } from "n8n-workflow";
 
-const showOnlyForChatGetResponse = {
-  operation: ["getResponse"],
+const showOnlyForChatSendMessage = {
+  operation: ["sendMessage"],
   resource: ["chat"],
 };
 
-export const chatGetResponseDescription: INodeProperties[] = [
+export const chatSendMessageDescription: INodeProperties[] = [
   {
     displayName: "Message",
     name: "prompt",
@@ -16,7 +16,7 @@ export const chatGetResponseDescription: INodeProperties[] = [
     default: "",
     required: true,
     displayOptions: {
-      show: showOnlyForChatGetResponse,
+      show: showOnlyForChatSendMessage,
     },
     description: "The message or task to send to your agency on the Agencii.ai platform",
     routing: {
@@ -32,7 +32,7 @@ export const chatGetResponseDescription: INodeProperties[] = [
     type: "string",
     default: "",
     displayOptions: {
-      show: showOnlyForChatGetResponse,
+      show: showOnlyForChatSendMessage,
     },
     description:
       "Optional: Session identifier to continue a conversation with your agency. If not provided, a new session will be created automatically.",
@@ -40,6 +40,23 @@ export const chatGetResponseDescription: INodeProperties[] = [
       send: {
         type: "body",
         property: "chatId",
+      },
+    },
+  },
+  {
+    displayName: "Integration ID",
+    name: "integrationId",
+    type: "string",
+    default: "",
+    required: true,
+    displayOptions: {
+      show: showOnlyForChatSendMessage,
+    },
+    description: "Your Agencii Integration ID (automatically populated from credentials)",
+    routing: {
+      send: {
+        type: "query",
+        property: "integration_id",
       },
     },
   },

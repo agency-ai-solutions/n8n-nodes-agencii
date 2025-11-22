@@ -21,6 +21,7 @@ This integration connects your n8n workflows directly to your agencies on the Ag
 - [How It Works](#how-it-works)
 - [Installation](#installation)
 - [Operations](#operations)
+- [Design Principles](#design-principles)
 - [Credentials](#credentials)
 - [Usage](#usage)
 - [Compatibility](#compatibility)
@@ -50,8 +51,8 @@ Send a message to your agency on the Agencii.ai platform and receive a response 
 
 **Parameters:**
 
-- **Prompt** (required): The message or task to send to your agency
-- **Chat ID** (optional): Session identifier to continue an existing conversation. If not provided, a new session is created automatically.
+- **Message** (required): The message or task to send to your agency
+- **Session ID** (optional): Identifier to continue an existing conversation. If not provided, a new session is created automatically.
 
 Note: Model selection, temperature, max tokens, tools, and agent behavior are configured on the Agencii.ai platform (see [Agency Swarm Overview](https://agency-swarm.ai/welcome/overview)).
 
@@ -63,6 +64,19 @@ Note: Model selection, temperature, max tokens, tools, and agent behavior are co
 - `metadata`: Additional response metadata
 - `model`: The model used for the completion
 
+## Design Principles
+
+- Connectivity, not configuration:
+  - This node connects n8n to your agencies on the Agencii.ai platform. It does not configure agent behavior.
+- Platform-managed tuning:
+  - Model, temperature, max tokens, system prompts, tools, and multi-agent logic are defined on the platform.
+- Fixed endpoint:
+  - The endpoint is fixed and not user-editable in this node. Routing to the correct agency is handled via your Integration ID.
+- Default agent routing:
+  - Messages are routed to your agency’s default agent unless otherwise configured on the platform.
+- Session-focused:
+  - Provide `Session ID` to continue context; omit it to start a new session automatically.
+
 ## Credentials
 
 To use this node, you need to configure your Agencii.ai Platform credentials:
@@ -72,19 +86,19 @@ To use this node, you need to configure your Agencii.ai Platform credentials:
 1. Sign up for an Agencii.ai account at [agencii.ai](https://agencii.ai)
 2. Create or select an agency in your Agencii.ai dashboard
 3. Navigate to the n8n Integration settings page for your agency
-4. Copy your API key (Integration ID) for n8n access
+4. Copy your Integration ID for n8n access
 
 ### Setting Up Credentials in n8n
 
 1. In n8n, go to **Credentials** and click **Add Credential**
 2. Search for **Agencii API** and select it
 3. Fill in the following field:
-   - **API Key**: Your Agencii.ai Integration ID from your agency's n8n settings page
+   - **Integration ID**: Your Agencii.ai Integration ID from your agency's n8n settings page
 4. Click **Save**
 
 ### Authentication Method
 
-The node uses Bearer token authentication. Your Integration ID is automatically included in the `Authorization` header, routing your requests to the correct agency on the Agencii.ai platform.
+The node uses Bearer token authentication and sends your Integration ID as a URL query parameter. Your Integration ID is automatically included in the `Authorization` header and as the `integration_id` query parameter, routing your requests to the correct agency on the Agencii.ai platform.
 
 ## Usage
 
@@ -98,8 +112,8 @@ Use the **Get Response** operation to send a single message to your agency and r
 1. Add an Agencii node to your workflow
 2. Select Resource: Chat
 3. Select Operation: Get Response
-4. Set Prompt: "Analyze the customer feedback data and provide a summary: {{$json.feedbackData}}"
-5. Leave Chat ID empty (a new session will be created automatically)
+4. Set Message: "Analyze the customer feedback data and provide a summary: {{$json.feedbackData}}"
+5. Leave Session ID empty (a new session will be created automatically)
 ```
 
 **Result:** Your agency processes the request using its configured agents and tools, returning the result.
@@ -115,14 +129,14 @@ Step 1: Initial request
 - Add an Agencii node
 - Select Resource: Chat
 - Select Operation: Get Response
-- Set Prompt: "Analyze this sales data and identify trends: {{$json.salesData}}"
-- Leave Chat ID empty (stores the chatId in output)
+- Set Message: "Analyze this sales data and identify trends: {{$json.salesData}}"
+- Leave Session ID empty (stores the chatId in output)
 
 Step 2: Follow-up questions
 - Add another Agencii node
 - Select Resource: Chat
 - Select Operation: Get Response
-- Set Prompt: "Based on those trends, what should our Q4 strategy be?"
+- Set Message: "Based on those trends, what should our Q4 strategy be?"
 - Set Chat ID: {{$node["Previous Node"].json.chatId}}
 - Your agency will remember the previous analysis and provide contextual recommendations
 ```
@@ -147,7 +161,7 @@ Store `chatId` values in n8n's built-in data storage or an external database to 
 
 When you send a message through this node:
 
-1. Your **Integration ID** (API Key) identifies which agency to route to
+1. Your **Integration ID** identifies which agency to route to
 2. The message is sent to your agency's **default agent** (configured in Agencii.ai platform)
 3. Your agency, powered by **agency-swarm**, coordinates between its agents to process the request
 4. Each agent has specific tools and capabilities configured in your agency setup
@@ -168,6 +182,7 @@ This node uses n8n's declarative routing feature for simplified API integration.
 - [n8n Documentation](https://docs.n8n.io/)
 - [n8n Community Nodes](https://docs.n8n.io/integrations/#community-nodes)
 - [Agencii.ai Platform](https://agencii.ai)
+- [Agency Swarm Overview](https://agency-swarm.ai/welcome/overview)
 - [Agency-Swarm Framework](https://github.com/VRSEN/agency-swarm)
 - [Agencii.ai Documentation](https://docs.agencii.ai)
 

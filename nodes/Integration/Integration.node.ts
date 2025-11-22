@@ -23,7 +23,7 @@ export class Integration implements INodeType {
       },
     ],
     requestDefaults: {
-      baseURL: "https://n8n-webhook-japboyzddq-uc.a.run.app",
+      baseURL: "https://n8n-webhook-qd6wo466iq-uc.a.run.app",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",

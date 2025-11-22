@@ -1,5 +1,5 @@
 /**
- * Unit tests for Agencii.ai Platform Integration - Get Response operation
+ * Unit tests for Agencii.ai Platform Integration - Send Message operation
  *
  * Tests verify:
  * - Correct HTTP method and endpoint
@@ -13,39 +13,39 @@ import { describe, it, expect, beforeAll } from "@jest/globals";
 import { chatDescription } from "../index";
 import type { INodeProperties } from "n8n-workflow";
 
-describe("Agencii Platform Integration - Get Response", () => {
-  let getResponseOperation: INodeProperties | undefined;
+describe("Agencii Platform Integration - Send Message", () => {
+  let sendMessageOperation: INodeProperties | undefined;
 
   beforeAll(() => {
     // Find the operation definition
-    getResponseOperation = chatDescription.find((prop) => prop.name === "operation");
+    sendMessageOperation = chatDescription.find((prop) => prop.name === "operation");
   });
 
   describe("Operation Definition", () => {
-    it("should define getResponse operation", () => {
-      expect(getResponseOperation).toBeDefined();
-      expect(getResponseOperation?.type).toBe("options");
+    it("should define sendMessage operation", () => {
+      expect(sendMessageOperation).toBeDefined();
+      expect(sendMessageOperation?.type).toBe("options");
 
-      const options = (getResponseOperation?.options as any[]) || [];
-      const getResponseOption = options.find((opt) => opt.value === "getResponse");
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
 
-      expect(getResponseOption).toBeDefined();
-      expect(getResponseOption?.name).toBe("Get Response");
-      expect(getResponseOption?.action).toBe("Send message to agency");
+      expect(sendMessageOption).toBeDefined();
+      expect(sendMessageOption?.name).toBe("Send Message");
+      expect(sendMessageOption?.action).toBe("Send message to agency");
     });
 
     it("should use POST method", () => {
-      const options = (getResponseOperation?.options as any[]) || [];
-      const getResponseOption = options.find((opt) => opt.value === "getResponse");
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
 
-      expect(getResponseOption?.routing?.request?.method).toBe("POST");
+      expect(sendMessageOption?.routing?.request?.method).toBe("POST");
     });
 
     it("should use correct endpoint (root path on Agencii.ai platform)", () => {
-      const options = (getResponseOperation?.options as any[]) || [];
-      const getResponseOption = options.find((opt) => opt.value === "getResponse");
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
 
-      expect(getResponseOption?.routing?.request?.url).toBe("/");
+      expect(sendMessageOption?.routing?.request?.url).toBe("/");
     });
   });
 
@@ -63,6 +63,27 @@ describe("Agencii Platform Integration - Get Response", () => {
 
       expect(promptField?.routing?.send?.type).toBe("body");
       expect(promptField?.routing?.send?.property).toBe("prompt");
+    });
+
+    it("should define integrationId parameter as required", () => {
+      const integrationIdField = chatDescription.find((prop) => prop.name === "integrationId");
+
+      expect(integrationIdField).toBeDefined();
+      expect(integrationIdField?.required).toBe(true);
+      expect(integrationIdField?.type).toBe("string");
+    });
+
+    it("should send integrationId as query parameter with name integration_id", () => {
+      const integrationIdField = chatDescription.find((prop) => prop.name === "integrationId");
+
+      expect(integrationIdField?.routing?.send?.type).toBe("query");
+      expect(integrationIdField?.routing?.send?.property).toBe("integration_id");
+    });
+
+    it("should auto-populate integrationId from credentials", () => {
+      const integrationIdField = chatDescription.find((prop) => prop.name === "integrationId");
+
+      expect(integrationIdField?.default).toBe("={{$credentials.integrationId}}");
     });
   });
 
@@ -85,18 +106,18 @@ describe("Agencii Platform Integration - Get Response", () => {
 
   describe("Response Normalization", () => {
     it("should define postReceive handler for response normalization", () => {
-      const options = (getResponseOperation?.options as any[]) || [];
-      const getResponseOption = options.find((opt) => opt.value === "getResponse");
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
 
-      expect(getResponseOption?.routing?.output?.postReceive).toBeDefined();
-      expect(Array.isArray(getResponseOption?.routing?.output?.postReceive)).toBe(true);
-      expect(getResponseOption?.routing?.output?.postReceive?.length).toBeGreaterThan(0);
+      expect(sendMessageOption?.routing?.output?.postReceive).toBeDefined();
+      expect(Array.isArray(sendMessageOption?.routing?.output?.postReceive)).toBe(true);
+      expect(sendMessageOption?.routing?.output?.postReceive?.length).toBeGreaterThan(0);
     });
 
     it("should normalize sessionId from various field names", async () => {
-      const options = (getResponseOperation?.options as any[]) || [];
-      const getResponseOption = options.find((opt) => opt.value === "getResponse");
-      const postReceive = getResponseOption?.routing?.output?.postReceive?.[0];
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
+      const postReceive = sendMessageOption?.routing?.output?.postReceive?.[0];
 
       // Mock items with different session identifier field names
       const testCases = [
@@ -113,9 +134,9 @@ describe("Agencii Platform Integration - Get Response", () => {
     });
 
     it("should normalize agency response text from various field names", async () => {
-      const options = (getResponseOperation?.options as any[]) || [];
-      const getResponseOption = options.find((opt) => opt.value === "getResponse");
-      const postReceive = getResponseOption?.routing?.output?.postReceive?.[0];
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
+      const postReceive = sendMessageOption?.routing?.output?.postReceive?.[0];
 
       // Mock items with different response text field names
       const testCases = [
@@ -133,17 +154,17 @@ describe("Agencii Platform Integration - Get Response", () => {
   });
 
   describe("Display Options", () => {
-    it("should only show message field for getResponse operation", () => {
+    it("should only show message field for sendMessage operation", () => {
       const promptField = chatDescription.find((prop) => prop.name === "prompt");
 
-      expect(promptField?.displayOptions?.show?.operation).toEqual(["getResponse"]);
+      expect(promptField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
       expect(promptField?.displayOptions?.show?.resource).toEqual(["chat"]);
     });
 
-    it("should only show sessionId field for getResponse operation", () => {
+    it("should only show sessionId field for sendMessage operation", () => {
       const chatIdField = chatDescription.find((prop) => prop.name === "chatId");
 
-      expect(chatIdField?.displayOptions?.show?.operation).toEqual(["getResponse"]);
+      expect(chatIdField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
       expect(chatIdField?.displayOptions?.show?.resource).toEqual(["chat"]);
     });
   });

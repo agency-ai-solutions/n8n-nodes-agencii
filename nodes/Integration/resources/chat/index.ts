@@ -1,5 +1,5 @@
 import type { INodeProperties } from "n8n-workflow";
-import { chatGetResponseDescription } from "./getResponse";
+import { chatSendMessageDescription } from "./sendMessage";
 
 const showOnlyForChat = {
   resource: ["chat"],
@@ -16,8 +16,8 @@ export const chatDescription: INodeProperties[] = [
     },
     options: [
       {
-        name: "Get Response",
-        value: "getResponse",
+        name: "Send Message",
+        value: "sendMessage",
         action: "Send message to agency",
         description: "Send a message to your agency on the Agencii.ai platform and receive a response",
         routing: {
@@ -54,7 +54,7 @@ export const chatDescription: INodeProperties[] = [
         },
       },
     ],
-    default: "getResponse",
+    default: "sendMessage",
   },
-  ...chatGetResponseDescription,
+  ...chatSendMessageDescription,
 ];
