@@ -1,97 +1,60 @@
-import type { INodeProperties } from 'n8n-workflow';
-import { chatGetResponseDescription } from './getResponse';
-import { chatCreateNewChatDescription } from './createNewChat';
+import type { INodeProperties } from "n8n-workflow";
+import { chatGetResponseDescription } from "./getResponse";
 
 const showOnlyForChat = {
-	resource: ['chat'],
+  resource: ["chat"],
 };
 
 export const chatDescription: INodeProperties[] = [
-	{
-		displayName: 'Operation',
-		name: 'operation',
-		type: 'options',
-		noDataExpression: true,
-		displayOptions: {
-			show: showOnlyForChat,
-		},
-		options: [
-			{
-				name: 'Get Response',
-				value: 'getResponse',
-				action: 'Generate a completion',
-				description: 'Generate a completion with optional chat reuse',
-				routing: {
-					request: {
-						method: 'POST',
-						url: '/chat/completions',
-					},
-					output: {
-						postReceive: [
-							async function(this, items, responseData) {
-								// Normalize the response to ensure chatId and text are always present
-								const normalizedItems = items.map((item) => {
-									const data = item.json as Record<string, unknown>;
-									
-									// Extract chatId (might be in different fields)
-									const chatId = (data.chatId || data.id || data.chat_id) as string;
-									
-									// Extract text response (might be in different fields)
-									const text = (data.text || data.response || data.content) as string;
-									
-									return {
-										json: {
-											...data,
-											chatId,
-											text,
-										},
-									};
-								});
-								
-								return normalizedItems;
-							},
-						],
-					},
-				},
-			},
-			{
-				name: 'Create New Chat',
-				value: 'createNewChat',
-				action: 'Create a new chat session',
-				description: 'Explicitly initialize a new chat/session for multi-turn conversations',
-				routing: {
-					request: {
-						method: 'POST',
-						url: '/chat/create',
-					},
-					output: {
-						postReceive: [
-							async function(this, items, responseData) {
-								// Normalize the response to ensure chatId is always present
-								const normalizedItems = items.map((item) => {
-									const data = item.json as Record<string, unknown>;
-									
-									// Extract chatId (might be in different fields)
-									const chatId = (data.chatId || data.id || data.chat_id) as string;
-									
-									return {
-										json: {
-											...data,
-											chatId,
-										},
-									};
-								});
-								
-								return normalizedItems;
-							},
-						],
-					},
-				},
-			},
-		],
-		default: 'getResponse',
-	},
-	...chatGetResponseDescription,
-	...chatCreateNewChatDescription,
-];
+  {
+    displayName: "Operation",
+    name: "operation",
+    type: "options",
+    noDataExpression: true,
+    displayOptions: {
+      show: showOnlyForChat,
+    },
+    options: [
+      {
+        name: "Get Response",
+        value: "getResponse",
+        action: "Send message to agency",
+        description: "Send a message to your agency on the Agencii.ai platform and receive a response",
+        routing: {
+          request: {
+            method: "POST",
+            url: "/",
+          },
+          output: {
+            postReceive: [
+              async function (this, items, responseData) {
+                // Normalize the response to ensure sessionId and text are always present
+                const normalizedItems = items.map((item) => {
+                  const data = item.json as Record<string, unknown>;
 
+                  // Extract session/chat identifier (might be in different fields)
+                  const chatId = (data.chatId || data.id || data.chat_id || data.sessionId) as string;
+
+                  // Extract agency response text (might be in different fields)
+                  const text = (data.text || data.response || data.content || data.message) as string;
+
+                  return {
+                    json: {
+                      ...data,
+                      chatId,
+                      text,
+                    },
+                  };
+                });
+
+                return normalizedItems;
+              },
+            ],
+          },
+        },
+      },
+    ],
+    default: "getResponse",
+  },
+  ...chatGetResponseDescription,
+];

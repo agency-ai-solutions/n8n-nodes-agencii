@@ -1,83 +1,94 @@
-# Agencii n8n Community Node - Refactoring Summary
+# Agencii.ai Platform n8n Integration - Refactoring Summary
 
 ## Overview
-This document summarizes the refactoring of the n8n community node integration to align with the Agencii Chat Response API requirements as specified in `.cursorrules`.
+
+This document summarizes the refactoring of the n8n community node to integrate with the Agencii.ai platform, which uses agency-swarm to provide multi-agent AI infrastructure.
+
+## Platform Understanding
+
+### What is Agencii.ai?
+
+Agencii.ai is an AI automation platform built on [agency-swarm](https://github.com/VRSEN/agency-swarm). It provides infrastructure for deploying and managing multi-agent AI systems (agencies) where specialized agents work together.
+
+### Integration Architecture
+
+1. **Platform-Side Configuration**: Agencies, agents, tools, and behavior are configured on Agencii.ai
+2. **n8n Integration ID**: Each agency has a unique Integration ID for n8n access
+3. **Message Routing**: Integration ID routes n8n messages to the correct agency's default agent
+4. **Agency Processing**: The agency coordinates its agents to process requests
+5. **Response**: Agency returns results to n8n workflow
+
+**Key Point**: This node provides connectivity between n8n and Agencii.ai. It does NOT implement AI logic - that's handled by agencies configured on the Agencii.ai platform.
 
 ## Changes Completed
 
 ### 1. ✅ Project Identity & Configuration
 
 #### Package Configuration (`package.json`)
+
 - **Updated package name**: `n8n-nodes-integration` → `n8n-nodes-agencii`
-- **Added comprehensive description**: "n8n community node for Agencii Chat Response API - Generate AI completions and manage conversational chat sessions"
-- **Updated keywords**: Added relevant keywords (agencii, ai, chat, completion, conversation, llm)
+- **Updated description**: "n8n community node for Agencii.ai Platform - Connect n8n workflows to agency-swarm powered agencies"
+- **Updated keywords**: Added relevant keywords (agencii, ai, agency-swarm, multi-agent, automation)
 - **Registered credentials**: Added `dist/credentials/AgenciiApi.credentials.js` to n8n configuration
 
 #### TypeScript Configuration (`tsconfig.json`)
+
 - **Added exclusions**: Excluded test files (`**/__tests__/**`, `**/*.test.ts`, `**/*.spec.ts`) from compilation
 - This ensures test files don't interfere with the build process
 
 ### 2. ✅ Authentication & Credentials
 
 #### Created `credentials/AgenciiApi.credentials.ts`
+
 - **Authentication type**: Bearer token
-- **Configuration fields**:
-  - `apiKey`: User's Agencii API key (password field)
-  - `baseUrl`: API endpoint (default: `https://api.agencii.com/v1`)
-- **Auto-injection**: API key automatically included in `Authorization` header
+- **Integration ID**: User's Agencii.ai Integration ID from agency's n8n settings page
+- **Purpose**: Routes n8n requests to the correct agency on Agencii.ai platform
+- **Auto-injection**: Integration ID automatically included in `Authorization` header
+- **Endpoint**: Hardcoded to `https://n8n-webhook-japboyzddq-uc.a.run.app` (Agencii.ai n8n endpoint)
 
 ### 3. ✅ Core Node Implementation
 
 #### Updated `nodes/Integration/Integration.node.ts`
+
 - **Changed display name**: "Integration" → "Agencii"
 - **Changed internal name**: `integration` → `agencii`
-- **Updated description**: Now describes Agencii Chat Response API
+- **Updated description**: Now describes Agencii.ai Platform integration
 - **Removed resources**: Deleted placeholder `user` and `company` resources
-- **Added single resource**: `chat` (focused on Agencii chat operations)
+- **Added single resource**: `chat` (for agency communication)
 - **Configured credentials**: Required `agenciiApi` credential
-- **Dynamic base URL**: Uses `={{$credentials.baseUrl}}` from credentials
+- **Fixed endpoint**: Uses `https://n8n-webhook-japboyzddq-uc.a.run.app` (Agencii.ai platform endpoint)
 
-### 4. ✅ Chat Resource Implementation
+### 4. ✅ Agency Communication Implementation
 
 #### Resource Structure: `nodes/Integration/resources/chat/`
 
 **`index.ts`** - Main resource definition
-- Defines two operations:
-  1. **Get Response** (`getResponse`)
-  2. **Create New Chat** (`createNewChat`)
 
-**`getResponse.ts`** - Single completion operation
+- Defines single operation: **Get Response** (`getResponse`)
+- Removed `createNewChat` (no longer needed - simplified to single action)
+
+**`getResponse.ts`** - Send message to agency
+
 - **Parameters**:
-  - `prompt` (required, string): Main text input for completion
-  - `chatId` (optional, string): Existing chat identifier for conversation continuity
-  - Additional fields:
-    - `model`: AI model selection
-    - `temperature`: Response randomness control (0-2)
-    - `maxTokens`: Response length limit
+  - `prompt` (required, string): Message or task to send to your agency
+  - `chatId` (optional, string): Session identifier for conversation continuity
+  - Tuning parameters (model, temperature, max tokens) are configured on Agencii.ai, not in this node
 - **HTTP Method**: POST
-- **Endpoint**: `/chat/completions`
+- **Endpoint**: `/` (root endpoint on Agencii.ai platform)
 - **Response normalization**: Extracts and standardizes `chatId` and `text` fields
-
-**`createNewChat.ts`** - Explicit chat creation
-- **Parameters**:
-  - Additional fields:
-    - `systemMessage`: Sets behavior/context for the chat session
-    - `metadata`: Key-value pairs for session metadata
-- **HTTP Method**: POST
-- **Endpoint**: `/chat/create`
-- **Response normalization**: Extracts and standardizes `chatId` field
-- **Metadata transformation**: Converts fixedCollection format to object format
+- **Purpose**: Connects n8n to agency's default agent on Agencii.ai platform
 
 ### 5. ✅ Shared Utilities
 
 #### Created `nodes/Integration/utils/` directory
 
 **`types.ts`** - Type definitions
-- `AgenciiChatResponse`: Response shape from Get Response operation
-- `AgenciiCreateChatResponse`: Response shape from Create New Chat operation
+
+- `AgenciiChatResponse`: Response shape from agency
 - `AgenciiErrorResponse`: Error response structure
 
 **`errorHandler.ts`** - Error handling utilities
+
 - `handleAgenciiError()`: Normalizes error messages from various error shapes
 - `validateResponse()`: Type-safe response validation
 - Fallback handling for unknown error types
@@ -87,18 +98,15 @@ This document summarizes the refactoring of the n8n community node integration t
 #### Created comprehensive test files:
 
 **`resources/chat/__tests__/getResponse.test.ts`**
+
 - Tests operation definition and routing
 - Validates required and optional parameters
 - Tests response normalization logic
 - Verifies display options and conditional rendering
-
-**`resources/chat/__tests__/createNewChat.test.ts`**
-- Tests operation definition and routing
-- Validates optional fields (systemMessage, metadata)
-- Tests metadata key-value transformation
-- Verifies response normalization
+- Validates endpoint is `/` (root path on Agencii.ai platform)
 
 **`utils/__tests__/errorHandler.test.ts`**
+
 - Tests error message extraction from various formats
 - Validates response type checking
 - Tests fallback error handling
@@ -106,22 +114,28 @@ This document summarizes the refactoring of the n8n community node integration t
 ### 7. ✅ Documentation
 
 #### Updated `README.md`
-- **Complete rewrite** aligned with Agencii integration
+
+- **Complete rewrite** aligned with Agencii.ai platform architecture
+- **Platform explanation**: Clear description of agency-swarm integration
 - **Installation instructions**: Community node installation steps
-- **Operations documentation**: Detailed descriptions of both operations
-- **Credentials setup**: Step-by-step authentication guide
+- **Operations documentation**: Detailed description of Get Response operation
+- **Credentials setup**: Step-by-step authentication using Integration ID
 - **Usage examples**:
-  - Workflow 1: Single completion (one-off requests)
-  - Workflow 2: Multi-turn conversation (context-aware chat)
-- **Advanced patterns**: Conditional chat creation, session management, response customization
-- **Version history**: Initial release notes
+  - Single request: Send task to agency
+  - Multi-turn conversation: Maintain session context
+- **Advanced patterns**: Session management, agency routing explanation
+- **Configuration clarity**: Explains what's configured on platform vs. in n8n
+- **Version history**: Updated release notes
 
 ### 8. ✅ Cleanup
 
 #### Removed old placeholder resources:
+
 - Deleted `nodes/Integration/resources/user/` directory and all files
 - Deleted `nodes/Integration/resources/company/` directory and all files
-- These were example/template resources not relevant to Agencii integration
+- Deleted `nodes/Integration/resources/chat/createNewChat.ts` (simplified to single action)
+- Deleted `nodes/Integration/resources/chat/__tests__/createNewChat.test.ts`
+- These were example/template resources not relevant to Agencii.ai platform integration
 
 ### 9. ✅ Build & Compilation
 
@@ -145,10 +159,8 @@ n8n-community-node-integration/
 │       │   └── chat/                    # Chat resource
 │       │       ├── index.ts             # Resource router
 │       │       ├── getResponse.ts       # Get Response operation
-│       │       ├── createNewChat.ts     # Create New Chat operation
 │       │       └── __tests__/           # Test files
-│       │           ├── getResponse.test.ts
-│       │           └── createNewChat.test.ts
+│       │           └── getResponse.test.ts
 │       └── utils/                       # Shared utilities
 │           ├── types.ts                 # Type definitions
 │           ├── errorHandler.ts          # Error handling
@@ -161,44 +173,47 @@ n8n-community-node-integration/
 └── README.md                            # Documentation
 ```
 
-## Core Workflows Implemented
+## Core Workflow Implemented
 
-### Workflow 1: Single Completion (`Get Response`)
-Use when you need a single AI completion without maintaining conversation history.
+### Single Operation: Get Response
 
-**Example**: Generate product descriptions, translate text, answer one-off questions
+Send a message to your agency on the Agencii.ai platform. If you pass a `chatId`, the agency keeps context; if not, a new session is created automatically.
 
-**Behavior**:
-- If `chatId` provided: Uses existing chat context
-- If `chatId` NOT provided: Creates new chat automatically
+## Alignment with Project Requirements
 
-### Workflow 2: Multi-Turn Conversation (`Create New Chat` → `Get Response`)
-Use when context matters and you need to maintain conversation history.
-
-**Example**: Customer support chatbot, interactive assistants, contextual Q&A
-
-**Behavior**:
-1. **Create New Chat**: Initialize session with optional system message
-2. **Get Response** (multiple times): Reuse `chatId` for context-aware responses
-
-## Alignment with `.cursorrules`
-
-✅ **Project Identity**: Focused on Agencii Chat Response API  
-✅ **Primary Node**: Single `Integration` node with two core actions  
-✅ **Simple UX**: Clear distinction between single-call and multi-turn workflows  
+✅ **Platform Integration**: Direct connection to Agencii.ai platform  
+✅ **Agency-Swarm**: Leverages agency-swarm infrastructure on platform
+✅ **Integration ID Routing**: Credentials route to correct agency
+✅ **Single Action**: Simplified to Get Response only
+✅ **Fixed Endpoint**: Hardcoded to Agencii.ai n8n webhook endpoint
+✅ **Session Management**: Optional chatId for conversation continuity
 ✅ **Strong Typing**: TypeScript types for all interfaces  
 ✅ **DRY Principle**: Shared utilities for common functionality  
-✅ **TDD Approach**: Comprehensive test suite created  
-✅ **Documentation**: Detailed README with workflow examples  
-✅ **Backwards Compatible**: No breaking changes to n8n node standards  
-✅ **Predictable Outputs**: Normalized response fields (`chatId`, `text`)  
+✅ **TDD Approach**: Comprehensive test suite  
+✅ **Clear Documentation**: Platform architecture clearly explained
+✅ **Predictable Outputs**: Normalized response fields (`chatId`, `text`)
+
+## Important Clarifications
+
+### No System Prompts in n8n Node
+
+Agent instructions, system prompts, and behavior are configured on the Agencii.ai platform, NOT in this n8n node. The node only:
+
+- Connects to an agency (via Integration ID)
+- Sends messages
+- Receives responses
+- Maintains sessions (via chatId)
+
+### Agency-Swarm Architecture
+
+The Agencii.ai platform uses [agency-swarm](https://github.com/VRSEN/agency-swarm) to power multi-agent systems. When you send a message through this node, agency-swarm coordinates the agents on the platform to process your request.
 
 ## Next Steps
 
-1. **Manual Testing**: Test the node in a local n8n instance
-2. **API Integration**: Configure with real Agencii API credentials
-3. **Workflow Testing**: Validate both single completion and multi-turn conversation patterns
-4. **Error Handling**: Test error scenarios and validate error messages
+1. **Manual Testing**: Test the node with a real Agencii.ai agency
+2. **Integration ID Setup**: Configure Integration ID from agency's n8n settings page
+3. **Agency Testing**: Validate message routing to correct agency and default agent
+4. **Session Testing**: Test conversation continuity with chatId
 5. **Publishing**: When ready, publish to npm for community use
 
 ## Development Commands
@@ -210,22 +225,19 @@ npm run build
 # Watch mode for development
 npm run build:watch
 
-# Run tests (when test runner is configured)
-npm test
-
-# Lint (currently disabled due to ESLint module issue)
+# Lint
 npm run lint
 ```
 
 ## Notes
 
-- **ESLint**: Strict mode temporarily disabled due to module import issues with `@n8n/eslint-plugin-community-nodes`. This is a known issue and doesn't affect functionality.
-- **Tests**: Test files are written but require a test runner (Jest/Mocha) to be configured in the future.
-- **Agencii API Endpoints**: The endpoints `/chat/completions` and `/chat/create` are assumed based on standard REST conventions. Update if actual Agencii API uses different paths.
+- **Endpoint**: Hardcoded to `https://n8n-webhook-japboyzddq-uc.a.run.app` (Agencii.ai n8n integration endpoint)
+- **Integration ID**: Acts as both authentication and routing identifier
+- **Platform Configuration**: All agency/agent configuration happens on Agencii.ai, not in n8n
+- **Agency-Swarm**: Agencies are powered by agency-swarm framework on the platform
 
 ---
 
 **Refactoring completed successfully!** 🎉
 
-The n8n community node is now fully aligned with the Agencii Chat Response API requirements as specified in `.cursorrules`.
-
+The n8n community node now correctly integrates with the Agencii.ai platform and agency-swarm infrastructure.

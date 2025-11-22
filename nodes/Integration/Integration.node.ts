@@ -23,7 +23,7 @@ export class Integration implements INodeType {
       },
     ],
     requestDefaults: {
-      baseURL: "={{$credentials.baseUrl}}",
+      baseURL: "https://n8n-webhook-japboyzddq-uc.a.run.app",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",

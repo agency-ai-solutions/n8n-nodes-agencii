@@ -1,19 +1,28 @@
 # n8n-nodes-agencii
 
-This is an n8n community node for the **Agencii Chat Response API**. It lets you generate AI completions and manage conversational chat sessions in your n8n workflows.
+This is an n8n community node for the **Agencii.ai Platform**. It connects your n8n workflows to your agency-swarm powered agencies on the Agencii.ai platform.
 
-[Agencii](https://agencii.com) is an AI platform that provides powerful chat completion capabilities for building conversational applications.
+[Agencii.ai](https://agencii.ai) is an AI automation platform that uses [agency-swarm](https://github.com/VRSEN/agency-swarm) to provide infrastructure for building and deploying AI agent agencies. The platform enables you to create multi-agent systems where specialized agents work together to accomplish complex tasks.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 
+## How It Works
+
+This integration connects your n8n workflows directly to your agencies on the Agencii.ai platform:
+
+1. **Platform Configuration**: In your Agencii.ai dashboard, you configure n8n integration settings for your agency
+2. **Integration ID**: Each agency gets a unique n8n integration ID that identifies which agency to route requests to
+3. **Default Agent Routing**: When you send a message through this node, the platform routes it to your agency's default agent
+4. **Agency-Swarm Processing**: Your agency (powered by agency-swarm) processes the request using its configured agents and tools
+5. **Response**: The agency's response is returned to your n8n workflow for further processing
+
 ## Table of Contents
 
+- [How It Works](#how-it-works)
 - [Installation](#installation)
 - [Operations](#operations)
 - [Credentials](#credentials)
 - [Usage](#usage)
-  - [Workflow 1: Single Completion](#workflow-1-single-completion)
-  - [Workflow 2: Multi-Turn Conversation](#workflow-2-multi-turn-conversation)
 - [Compatibility](#compatibility)
 - [Resources](#resources)
 - [Version History](#version-history)
@@ -33,136 +42,118 @@ After installation, the **Agencii** node will be available in your node palette.
 
 ## Operations
 
-The Agencii node supports the following operations:
+The Agencii node supports the following operation:
 
-### Chat Resource
+### Get Response
 
-#### Get Response
-
-Generate an AI completion with optional chat reuse. This is the primary operation for generating responses from the Agencii API.
+Send a message to your agency on the Agencii.ai platform and receive a response from your agency's default agent.
 
 **Parameters:**
 
-- **Prompt** (required): The text prompt or message to send to the AI
-- **Chat ID** (optional): Existing chat identifier to continue a conversation. If not provided, a new chat is created automatically.
-- **Additional Fields:**
-  - **Model**: Specify which AI model to use
-  - **Temperature**: Control response randomness (0-2)
-  - **Max Tokens**: Limit the response length
+- **Prompt** (required): The message or task to send to your agency
+- **Chat ID** (optional): Session identifier to continue an existing conversation. If not provided, a new session is created automatically.
+
+Note: Model selection, temperature, max tokens, tools, and agent behavior are configured on the Agencii.ai platform (see [Agency Swarm Overview](https://agency-swarm.ai/welcome/overview)).
 
 **Returns:**
 
-- `text` or `response`: The AI-generated completion
-- `chatId`: The chat identifier (existing or newly created)
+- `text` or `response`: The agency's response to your message
+- `chatId`: The session identifier (for continuing the conversation in follow-up calls)
 - `usage`: Token usage statistics (if available)
 - `metadata`: Additional response metadata
 - `model`: The model used for the completion
 
-#### Create New Chat
-
-Explicitly create a new chat session for multi-turn conversations.
-
-**Parameters:**
-
-- **Additional Fields:**
-  - **System Message**: Set the behavior or context for the chat session
-  - **Metadata**: Custom key-value pairs to attach to the session
-
-**Returns:**
-
-- `chatId`: The newly created chat identifier
-- `createdAt`: Timestamp of creation
-- `metadata`: Attached metadata
-
 ## Credentials
 
-To use this node, you need to configure your Agencii API credentials:
+To use this node, you need to configure your Agencii.ai Platform credentials:
 
 ### Prerequisites
 
-1. Sign up for an Agencii account at [agencii.com](https://agencii.com)
-2. Navigate to your dashboard and generate an API key under **API Settings**
+1. Sign up for an Agencii.ai account at [agencii.ai](https://agencii.ai)
+2. Create or select an agency in your Agencii.ai dashboard
+3. Navigate to the n8n Integration settings page for your agency
+4. Copy your API key (Integration ID) for n8n access
 
 ### Setting Up Credentials in n8n
 
 1. In n8n, go to **Credentials** and click **Add Credential**
 2. Search for **Agencii API** and select it
-3. Fill in the following fields:
-   - **API Key**: Your Agencii API key
-   - **Base URL**: The API endpoint (default: `https://api.agencii.com/v1`)
+3. Fill in the following field:
+   - **API Key**: Your Agencii.ai Integration ID from your agency's n8n settings page
 4. Click **Save**
 
 ### Authentication Method
 
-The node uses Bearer token authentication. Your API key is automatically included in the `Authorization` header for all requests.
+The node uses Bearer token authentication. Your Integration ID is automatically included in the `Authorization` header, routing your requests to the correct agency on the Agencii.ai platform.
 
 ## Usage
 
-### Workflow 1: Single Completion
+### Single Request
 
-Use the **Get Response** operation to generate a single completion. This is ideal for one-off requests where you don't need to maintain conversation history.
+Use the **Get Response** operation to send a single message to your agency and receive a response.
 
-**Example Use Case:** Generate a product description from a product name
+**Example Use Case:** Task execution via agency
 
 ```
 1. Add an Agencii node to your workflow
 2. Select Resource: Chat
 3. Select Operation: Get Response
-4. Set Prompt: "Generate a catchy product description for: {{$json.productName}}"
-5. Leave Chat ID empty (a new chat will be created automatically)
+4. Set Prompt: "Analyze the customer feedback data and provide a summary: {{$json.feedbackData}}"
+5. Leave Chat ID empty (a new session will be created automatically)
 ```
 
-**Result:** The node returns the AI-generated text and a `chatId` (which you can ignore if you don't need it).
+**Result:** Your agency processes the request using its configured agents and tools, returning the result.
 
-### Workflow 2: Multi-Turn Conversation
+### Multi-Turn Conversation
 
-For conversational flows where context matters, use **Create New Chat** followed by multiple **Get Response** calls with the same `chatId`.
+For conversational workflows where context matters, reuse the `chatId` from previous calls in subsequent **Get Response** calls to maintain session continuity.
 
-**Example Use Case:** Customer support chatbot with context awareness
+**Example Use Case:** Interactive data analysis with context
 
 ```
-Step 1: Initialize the conversation
+Step 1: Initial request
 - Add an Agencii node
 - Select Resource: Chat
-- Select Operation: Create New Chat
-- Set System Message: "You are a helpful customer support agent"
-- Store the returned chatId in a variable: {{$json.chatId}}
+- Select Operation: Get Response
+- Set Prompt: "Analyze this sales data and identify trends: {{$json.salesData}}"
+- Leave Chat ID empty (stores the chatId in output)
 
-Step 2: First user message
+Step 2: Follow-up questions
 - Add another Agencii node
 - Select Resource: Chat
 - Select Operation: Get Response
-- Set Prompt: {{$json.userMessage}}
-- Set Chat ID: {{$node["Create New Chat"].json.chatId}}
-
-Step 3: Follow-up messages
-- Continue using Get Response with the same Chat ID
-- The AI will maintain context from previous messages
+- Set Prompt: "Based on those trends, what should our Q4 strategy be?"
+- Set Chat ID: {{$node["Previous Node"].json.chatId}}
+- Your agency will remember the previous analysis and provide contextual recommendations
 ```
 
 **Benefits:**
 
-- The AI remembers previous messages in the conversation
-- More natural and contextual responses
-- Efficient token usage (you don't need to resend full history)
+- Your agency maintains conversation context across multiple interactions
+- More natural and contextual task execution
+- Efficient processing as the agency remembers prior exchanges
 
 ### Advanced Patterns
 
-#### Conditional Chat Creation
+#### Conditional Session Management
 
-Use an IF node to check if a `chatId` exists. If yes, reuse it; if no, create a new chat.
+Use an IF node to check if a `chatId` exists. If yes, reuse it for conversation continuity; if no, a new session will be created automatically.
 
-#### Chat Session Management
+#### Session Persistence
 
-Store `chatId` values in n8n's built-in data storage or an external database to maintain long-running conversations across multiple workflow executions.
+Store `chatId` values in n8n's built-in data storage or an external database to maintain long-running conversations with your agency across multiple workflow executions.
 
-#### Response Customization
+### Understanding Agency Routing
 
-Use the **Additional Fields** options to fine-tune AI behavior:
+When you send a message through this node:
 
-- Lower **Temperature** (0-0.5) for factual, consistent responses
-- Higher **Temperature** (1-2) for creative, varied responses
-- Adjust **Max Tokens** to control response length and cost
+1. Your **Integration ID** (API Key) identifies which agency to route to
+2. The message is sent to your agency's **default agent** (configured in Agencii.ai platform)
+3. Your agency, powered by **agency-swarm**, coordinates between its agents to process the request
+4. Each agent has specific tools and capabilities configured in your agency setup
+5. The agency returns the final response to your n8n workflow
+
+**Note:** Agent behavior, system prompts, tools, and capabilities are all configured within the Agencii.ai platform, not in this n8n node. The node simply connects n8n to your pre-configured agency.
 
 ## Compatibility
 
@@ -176,8 +167,9 @@ This node uses n8n's declarative routing feature for simplified API integration.
 
 - [n8n Documentation](https://docs.n8n.io/)
 - [n8n Community Nodes](https://docs.n8n.io/integrations/#community-nodes)
-- [Agencii API Documentation](https://docs.agencii.com/api)
-- [Agencii Platform](https://agencii.com)
+- [Agencii.ai Platform](https://agencii.ai)
+- [Agency-Swarm Framework](https://github.com/VRSEN/agency-swarm)
+- [Agencii.ai Documentation](https://docs.agencii.ai)
 
 ## Support
 
@@ -190,13 +182,12 @@ For issues, questions, or feature requests:
 
 ### 0.1.0 (Initial Release)
 
-- ✨ Initial implementation of Agencii Chat Response API integration
-- 🚀 Support for two core operations:
-  - **Get Response**: Single completion with optional chat reuse
-  - **Create New Chat**: Explicit chat session initialization
-- 🔐 Secure API authentication with Bearer tokens
+- ✨ Initial implementation of Agencii.ai Platform integration for n8n
+- 🚀 Support for **Get Response** operation: Send messages to your agency-swarm powered agencies
+- 🔐 Secure API authentication via Integration ID (routes to specific agency)
+- 🤖 Direct integration with agency-swarm infrastructure on Agencii.ai
 - 📊 Token usage statistics and metadata in responses
-- 🎛️ Advanced options: model selection, temperature control, max tokens
+- 💬 Session management for multi-turn conversations with agencies
 - 📝 Comprehensive documentation and workflow examples
 
 ## License
