@@ -7,6 +7,7 @@ The repo-specific rules embedded in the workspace configuration need to be updat
 ## Current Understanding (INCORRECT in workspace rules)
 
 The workspace rules currently describe this as:
+
 - A generic Agencii chat response API integration
 - Supporting two operations: Get Response and Create New Chat
 - Allowing custom endpoint configuration
@@ -15,6 +16,7 @@ The workspace rules currently describe this as:
 ## Correct Understanding (NEEDS UPDATE)
 
 This integration actually:
+
 - Connects to the **Agencii.ai platform** (not a generic API)
 - Uses **agency-swarm** infrastructure for multi-agent systems
 - Routes to agencies via **Integration ID** from platform's n8n settings
@@ -95,6 +97,7 @@ This is an n8n community node integration for the **Agencii.ai platform**, which
 ### Configuration Separation
 
 **Configured on Agencii.ai Platform** (NOT in n8n):
+
 - Agent instructions and system prompts
 - Agent tools and capabilities
 - Multi-agent coordination rules
@@ -102,6 +105,7 @@ This is an n8n community node integration for the **Agencii.ai platform**, which
 - Default agent selection
 
 **Configured in n8n Node**:
+
 - Integration ID (which agency to connect to)
 - Message/task to send
 - Session management (chatId)
@@ -116,6 +120,7 @@ This is an n8n community node integration for the **Agencii.ai platform**, which
 ### Critical Understanding
 
 This node is a **connectivity layer** between n8n and Agencii.ai platform. It does NOT:
+
 - ❌ Implement AI logic
 - ❌ Configure agent behavior
 - ❌ Set system prompts

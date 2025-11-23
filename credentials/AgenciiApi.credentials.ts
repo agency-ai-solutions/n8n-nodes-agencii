@@ -12,7 +12,7 @@ export class AgenciiApi implements ICredentialType {
       typeOptions: { password: true },
       default: "",
       required: true,
-      description: "Your Agencii API key. You can find this in your Agencii dashboard under API Settings.",
+      description: "Your Agencii API key for authentication. You can find this in your Agencii dashboard.",
     },
   ];
 

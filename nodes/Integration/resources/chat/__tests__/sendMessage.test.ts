@@ -50,19 +50,19 @@ describe("Agencii Platform Integration - Send Message", () => {
   });
 
   describe("Required Parameters", () => {
-    it("should define message/prompt parameter as required", () => {
-      const promptField = chatDescription.find((prop) => prop.name === "prompt");
+    it("should define message parameter as required", () => {
+      const messageField = chatDescription.find((prop) => prop.name === "message");
 
-      expect(promptField).toBeDefined();
-      expect(promptField?.required).toBe(true);
-      expect(promptField?.type).toBe("string");
+      expect(messageField).toBeDefined();
+      expect(messageField?.required).toBe(true);
+      expect(messageField?.type).toBe("string");
     });
 
     it("should send message in request body", () => {
-      const promptField = chatDescription.find((prop) => prop.name === "prompt");
+      const messageField = chatDescription.find((prop) => prop.name === "message");
 
-      expect(promptField?.routing?.send?.type).toBe("body");
-      expect(promptField?.routing?.send?.property).toBe("prompt");
+      expect(messageField?.routing?.send?.type).toBe("body");
+      expect(messageField?.routing?.send?.property).toBe("message");
     });
 
     it("should define integrationId parameter as required", () => {
@@ -83,24 +83,34 @@ describe("Agencii Platform Integration - Send Message", () => {
     it("should auto-populate integrationId from credentials", () => {
       const integrationIdField = chatDescription.find((prop) => prop.name === "integrationId");
 
-      expect(integrationIdField?.default).toBe("={{$credentials.integrationId}}");
+      // Integration ID is now a node parameter, not auto-populated from credentials
+      expect(integrationIdField?.default).toBe("");
+    });
+
+    it("should send operation field as 'getResponse' in request body", () => {
+      const operationField = chatDescription.find((prop) => prop.name === "operation" && prop.type === "hidden");
+
+      expect(operationField).toBeDefined();
+      expect(operationField?.default).toBe("getResponse");
+      expect(operationField?.routing?.send?.type).toBe("body");
+      expect(operationField?.routing?.send?.property).toBe("operation");
     });
   });
 
   describe("Optional Parameters", () => {
-    it("should define sessionId/chatId parameter as optional", () => {
-      const chatIdField = chatDescription.find((prop) => prop.name === "chatId");
+    it("should define sessionId parameter as optional", () => {
+      const sessionIdField = chatDescription.find((prop) => prop.name === "sessionId");
 
-      expect(chatIdField).toBeDefined();
-      expect(chatIdField?.required).toBeUndefined();
-      expect(chatIdField?.type).toBe("string");
+      expect(sessionIdField).toBeDefined();
+      expect(sessionIdField?.required).toBeUndefined();
+      expect(sessionIdField?.type).toBe("string");
     });
 
     it("should send sessionId in request body when provided", () => {
-      const chatIdField = chatDescription.find((prop) => prop.name === "chatId");
+      const sessionIdField = chatDescription.find((prop) => prop.name === "sessionId");
 
-      expect(chatIdField?.routing?.send?.type).toBe("body");
-      expect(chatIdField?.routing?.send?.property).toBe("chatId");
+      expect(sessionIdField?.routing?.send?.type).toBe("body");
+      expect(sessionIdField?.routing?.send?.property).toBe("sessionId");
     });
   });
 
@@ -121,51 +131,53 @@ describe("Agencii Platform Integration - Send Message", () => {
 
       // Mock items with different session identifier field names
       const testCases = [
-        { json: { chatId: "session-123" } },
-        { json: { id: "session-456" } },
-        { json: { chat_id: "session-789" } },
-        { json: { sessionId: "session-abc" } },
+        { json: { sessionId: "session-123" } },
+        { json: { chatId: "session-456" } },
+        { json: { id: "session-789" } },
+        { json: { chat_id: "session-abc" } },
       ];
 
       for (const item of testCases) {
         const result = await postReceive?.call({}, [item], {});
-        expect(result[0].json.chatId).toBeDefined();
+        expect(result[0].json.sessionId).toBeDefined();
       }
     });
 
-    it("should normalize agency response text from various field names", async () => {
+    it("should normalize agency response text and create response alias", async () => {
       const options = (sendMessageOperation?.options as any[]) || [];
       const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
       const postReceive = sendMessageOption?.routing?.output?.postReceive?.[0];
 
       // Mock items with different response text field names
       const testCases = [
-        { json: { text: "Agency response 1", chatId: "session-1" } },
-        { json: { response: "Agency response 2", chatId: "session-2" } },
-        { json: { content: "Agency response 3", chatId: "session-3" } },
-        { json: { message: "Agency response 4", chatId: "session-4" } },
+        { json: { text: "Agency response 1", sessionId: "session-1" } },
+        { json: { response: "Agency response 2", sessionId: "session-2" } },
+        { json: { content: "Agency response 3", sessionId: "session-3" } },
+        { json: { message: "Agency response 4", sessionId: "session-4" } },
       ];
 
       for (const item of testCases) {
         const result = await postReceive?.call({}, [item], {});
         expect(result[0].json.text).toBeDefined();
+        expect(result[0].json.response).toBeDefined();
+        expect(result[0].json.text).toBe(result[0].json.response);
       }
     });
   });
 
   describe("Display Options", () => {
     it("should only show message field for sendMessage operation", () => {
-      const promptField = chatDescription.find((prop) => prop.name === "prompt");
+      const messageField = chatDescription.find((prop) => prop.name === "message");
 
-      expect(promptField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
-      expect(promptField?.displayOptions?.show?.resource).toEqual(["chat"]);
+      expect(messageField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
+      expect(messageField?.displayOptions?.show?.resource).toEqual(["chat"]);
     });
 
     it("should only show sessionId field for sendMessage operation", () => {
-      const chatIdField = chatDescription.find((prop) => prop.name === "chatId");
+      const sessionIdField = chatDescription.find((prop) => prop.name === "sessionId");
 
-      expect(chatIdField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
-      expect(chatIdField?.displayOptions?.show?.resource).toEqual(["chat"]);
+      expect(sessionIdField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
+      expect(sessionIdField?.displayOptions?.show?.resource).toEqual(["chat"]);
     });
   });
 });

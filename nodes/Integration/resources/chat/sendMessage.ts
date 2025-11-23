@@ -8,7 +8,7 @@ const showOnlyForChatSendMessage = {
 export const chatSendMessageDescription: INodeProperties[] = [
   {
     displayName: "Message",
-    name: "prompt",
+    name: "message",
     type: "string",
     typeOptions: {
       rows: 4,
@@ -22,13 +22,13 @@ export const chatSendMessageDescription: INodeProperties[] = [
     routing: {
       send: {
         type: "body",
-        property: "prompt",
+        property: "message",
       },
     },
   },
   {
     displayName: "Session ID",
-    name: "chatId",
+    name: "sessionId",
     type: "string",
     default: "",
     displayOptions: {
@@ -39,7 +39,22 @@ export const chatSendMessageDescription: INodeProperties[] = [
     routing: {
       send: {
         type: "body",
-        property: "chatId",
+        property: "sessionId",
+      },
+    },
+  },
+  {
+    displayName: "Operation",
+    name: "operation",
+    type: "hidden",
+    default: "getResponse",
+    displayOptions: {
+      show: showOnlyForChatSendMessage,
+    },
+    routing: {
+      send: {
+        type: "body",
+        property: "operation",
       },
     },
   },
@@ -52,7 +67,7 @@ export const chatSendMessageDescription: INodeProperties[] = [
     displayOptions: {
       show: showOnlyForChatSendMessage,
     },
-    description: "Your Agencii Integration ID (automatically populated from credentials)",
+    description: "Your Agencii Integration ID for this specific agency. Each node can connect to a different agency.",
     routing: {
       send: {
         type: "query",

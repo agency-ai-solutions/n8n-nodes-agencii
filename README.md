@@ -45,7 +45,7 @@ After installation, the **Agencii** node will be available in your node palette.
 
 The Agencii node supports the following operation:
 
-### Get Response
+### Send Message
 
 Send a message to your agency on the Agencii.ai platform and receive a response from your agency's default agent.
 
@@ -53,16 +53,17 @@ Send a message to your agency on the Agencii.ai platform and receive a response 
 
 - **Message** (required): The message or task to send to your agency
 - **Session ID** (optional): Identifier to continue an existing conversation. If not provided, a new session is created automatically.
+- **Integration ID** (required): The specific Integration ID for the agency you want to connect to
 
 Note: Model selection, temperature, max tokens, tools, and agent behavior are configured on the Agencii.ai platform (see [Agency Swarm Overview](https://agency-swarm.ai/welcome/overview)).
 
 **Returns:**
 
-- `text` or `response`: The agency's response to your message
-- `chatId`: The session identifier (for continuing the conversation in follow-up calls)
-- `usage`: Token usage statistics (if available)
-- `metadata`: Additional response metadata
-- `model`: The model used for the completion
+- `text`: The agency's response to your message
+- `response`: Alias for `text` (for backwards compatibility)
+- `sessionId`: The session identifier (for continuing the conversation in follow-up calls)
+- `n8nIntegrationId`: The integration ID used
+- Additional metadata fields as provided by the backend
 
 ## Design Principles
 
@@ -84,43 +85,51 @@ To use this node, you need to configure your Agencii.ai Platform credentials:
 ### Prerequisites
 
 1. Sign up for an Agencii.ai account at [agencii.ai](https://agencii.ai)
-2. Create or select an agency in your Agencii.ai dashboard
-3. Navigate to the n8n Integration settings page for your agency
-4. Copy your Integration ID for n8n access
+2. Get your API key from your Agencii dashboard
+3. For each workflow, you'll need the specific Integration ID for the agency you want to connect to
 
 ### Setting Up Credentials in n8n
 
 1. In n8n, go to **Credentials** and click **Add Credential**
 2. Search for **Agencii API** and select it
 3. Fill in the following field:
-   - **Integration ID**: Your Agencii.ai Integration ID from your agency's n8n settings page
+   - **API Key**: Your Agencii.ai API key for authentication
 4. Click **Save**
+
+### Configuring Each Node
+
+Each Agencii node instance requires an **Integration ID** parameter that specifies which agency to connect to. This allows you to:
+
+- Connect different nodes to different agencies in the same workflow
+- Reuse the same API credentials across multiple agencies
+- Easily switch between agencies by changing the Integration ID parameter
 
 ### Authentication Method
 
-The node uses Bearer token authentication and sends your Integration ID as a URL query parameter. Your Integration ID is automatically included in the `Authorization` header and as the `integration_id` query parameter, routing your requests to the correct agency on the Agencii.ai platform.
+The node uses Bearer token authentication (API Key in header) and sends your Integration ID as a URL query parameter to route requests to the correct agency on the Agencii.ai platform.
 
 ## Usage
 
 ### Single Request
 
-Use the **Get Response** operation to send a single message to your agency and receive a response.
+Use the **Send Message** operation to send a single message to your agency and receive a response.
 
 **Example Use Case:** Task execution via agency
 
 ```
 1. Add an Agencii node to your workflow
 2. Select Resource: Chat
-3. Select Operation: Get Response
-4. Set Message: "Analyze the customer feedback data and provide a summary: {{$json.feedbackData}}"
-5. Leave Session ID empty (a new session will be created automatically)
+3. Select Operation: Send Message
+4. Set Integration ID: Your agency's Integration ID from Agencii dashboard
+5. Set Message: "Analyze the customer feedback data and provide a summary: {{$json.feedbackData}}"
+6. Leave Session ID empty (a new session will be created automatically)
 ```
 
 **Result:** Your agency processes the request using its configured agents and tools, returning the result.
 
 ### Multi-Turn Conversation
 
-For conversational workflows where context matters, reuse the `chatId` from previous calls in subsequent **Get Response** calls to maintain session continuity.
+For conversational workflows where context matters, reuse the `sessionId` from previous calls in subsequent **Send Message** calls to maintain session continuity.
 
 **Example Use Case:** Interactive data analysis with context
 
@@ -128,16 +137,18 @@ For conversational workflows where context matters, reuse the `chatId` from prev
 Step 1: Initial request
 - Add an Agencii node
 - Select Resource: Chat
-- Select Operation: Get Response
+- Select Operation: Send Message
+- Set Integration ID: Your agency's Integration ID
 - Set Message: "Analyze this sales data and identify trends: {{$json.salesData}}"
-- Leave Session ID empty (stores the chatId in output)
+- Leave Session ID empty (stores the sessionId in output)
 
 Step 2: Follow-up questions
 - Add another Agencii node
 - Select Resource: Chat
-- Select Operation: Get Response
+- Select Operation: Send Message
+- Set Integration ID: Same Integration ID as Step 1
 - Set Message: "Based on those trends, what should our Q4 strategy be?"
-- Set Chat ID: {{$node["Previous Node"].json.chatId}}
+- Set Session ID: {{$node["Previous Node"].json.sessionId}}
 - Your agency will remember the previous analysis and provide contextual recommendations
 ```
 
@@ -151,11 +162,11 @@ Step 2: Follow-up questions
 
 #### Conditional Session Management
 
-Use an IF node to check if a `chatId` exists. If yes, reuse it for conversation continuity; if no, a new session will be created automatically.
+Use an IF node to check if a `sessionId` exists. If yes, reuse it for conversation continuity; if no, a new session will be created automatically.
 
 #### Session Persistence
 
-Store `chatId` values in n8n's built-in data storage or an external database to maintain long-running conversations with your agency across multiple workflow executions.
+Store `sessionId` values in n8n's built-in data storage or an external database to maintain long-running conversations with your agency across multiple workflow executions.
 
 ### Understanding Agency Routing
 
@@ -198,10 +209,10 @@ For issues, questions, or feature requests:
 ### 0.1.0 (Initial Release)
 
 - ✨ Initial implementation of Agencii.ai Platform integration for n8n
-- 🚀 Support for **Get Response** operation: Send messages to your agency-swarm powered agencies
+- 🚀 Support for **Send Message** operation: Send messages to your agency-swarm powered agencies
 - 🔐 Secure API authentication via Integration ID (routes to specific agency)
 - 🤖 Direct integration with agency-swarm infrastructure on Agencii.ai
-- 📊 Token usage statistics and metadata in responses
+- 📊 Response includes `text`, `response` (alias), and `sessionId` fields
 - 💬 Session management for multi-turn conversations with agencies
 - 📝 Comprehensive documentation and workflow examples
 

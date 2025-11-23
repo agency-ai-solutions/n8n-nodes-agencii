@@ -28,21 +28,23 @@ export const chatDescription: INodeProperties[] = [
           output: {
             postReceive: [
               async function (this, items, responseData) {
-                // Normalize the response to ensure sessionId and text are always present
+                // Clean and normalize the response to only include essential fields
                 const normalizedItems = items.map((item) => {
                   const data = item.json as Record<string, unknown>;
 
-                  // Extract session/chat identifier (might be in different fields)
-                  const chatId = (data.chatId || data.id || data.chat_id || data.sessionId) as string;
+                  // Extract session identifier (backend returns 'sessionId')
+                  const sessionId = (data.sessionId || data.chatId || data.id || data.chat_id) as string;
 
-                  // Extract agency response text (might be in different fields)
+                  // Extract agency response text (backend returns 'text' and 'response' as aliases)
                   const text = (data.text || data.response || data.content || data.message) as string;
+                  const response = text; // Create alias for backwards compatibility
 
+                  // Return only the essential fields, removing unnecessary keys
                   return {
                     json: {
-                      ...data,
-                      chatId,
                       text,
+                      response,
+                      sessionId,
                     },
                   };
                 });
