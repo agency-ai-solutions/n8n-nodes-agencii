@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-agencii",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "n8n community node for Agencii.ai Platform - Connect n8n workflows to agency-swarm powered multi-agent AI systems",
   "license": "MIT",
   "homepage": "https://github.com/agency-ai-solutions/n8n-nodes-agencii",
