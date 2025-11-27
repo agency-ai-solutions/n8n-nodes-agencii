@@ -163,6 +163,24 @@ describe("Agencii Platform Integration - Send Message", () => {
         expect(result[0].json.text).toBe(result[0].json.response);
       }
     });
+
+    it("should include integrationId in the response when present", async () => {
+      const options = (sendMessageOperation?.options as any[]) || [];
+      const sendMessageOption = options.find((opt) => opt.value === "sendMessage");
+      const postReceive = sendMessageOption?.routing?.output?.postReceive?.[0];
+
+      // Mock item with integrationId
+      const item = {
+        json: {
+          text: "Agency response",
+          sessionId: "session-123",
+          integrationId: "int-456",
+        },
+      };
+
+      const result = await postReceive?.call({}, [item], {});
+      expect(result[0].json.integrationId).toBe("int-456");
+    });
   });
 
   describe("Display Options", () => {

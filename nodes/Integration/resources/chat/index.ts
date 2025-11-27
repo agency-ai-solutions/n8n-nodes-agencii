@@ -39,12 +39,16 @@ export const chatDescription: INodeProperties[] = [
                   const text = (data.text || data.response || data.content || data.message) as string;
                   const response = text; // Create alias for backwards compatibility
 
+                  // Extract integration identifier (backend returns 'integrationId')
+                  const integrationId = (data.integrationId || data.integration_id) as string;
+
                   // Return only the essential fields, removing unnecessary keys
                   return {
                     json: {
                       text,
                       response,
                       sessionId,
+                      integrationId,
                     },
                   };
                 });
