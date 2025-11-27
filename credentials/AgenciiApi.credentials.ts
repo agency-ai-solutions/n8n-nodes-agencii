@@ -1,9 +1,9 @@
-import type { ICredentialType, INodeProperties, IAuthenticateGeneric } from "n8n-workflow";
+import type { ICredentialType, INodeProperties, IAuthenticateGeneric, ICredentialTestRequest } from "n8n-workflow";
 
 export class AgenciiApi implements ICredentialType {
   name = "agenciiApi";
   displayName = "Agencii API";
-  documentationUrl = "https://docs.agencii.com/api";
+  documentationUrl = "https://agency-swarm.ai/platform/integrations/n8n-integration";
   properties: INodeProperties[] = [
     {
       displayName: "API Key",
@@ -22,6 +22,13 @@ export class AgenciiApi implements ICredentialType {
       headers: {
         Authorization: "=Bearer {{$credentials.apiKey}}",
       },
+    },
+  };
+
+  test: ICredentialTestRequest = {
+    request: {
+      url: "https://api.agencii.ai/",
+      method: "GET",
     },
   };
 }
