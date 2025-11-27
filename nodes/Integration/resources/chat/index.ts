@@ -28,6 +28,7 @@ export const chatDescription: INodeProperties[] = [
           output: {
             postReceive: [
               async function (this, items, responseData) {
+                console.log("responseData", responseData);
                 // Clean and normalize the response to only include essential fields
                 const normalizedItems = items.map((item) => {
                   const data = item.json as Record<string, unknown>;
@@ -40,7 +41,7 @@ export const chatDescription: INodeProperties[] = [
                   const response = text; // Create alias for backwards compatibility
 
                   // Extract integration identifier (backend returns 'integrationId')
-                  const integrationId = (data.integrationId || data.integration_id) as string;
+                  const integrationId = (data.n8nIntegrationId || data.integrationId || data.integration_id) as string;
 
                   // Return only the essential fields, removing unnecessary keys
                   return {
