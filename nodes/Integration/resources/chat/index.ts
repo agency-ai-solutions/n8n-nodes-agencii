@@ -28,7 +28,6 @@ export const chatDescription: INodeProperties[] = [
           output: {
             postReceive: [
               async function (this, items, responseData) {
-                console.log("responseData", responseData);
                 // Clean and normalize the response to only include essential fields
                 const normalizedItems = items.map((item) => {
                   const data = item.json as Record<string, unknown>;

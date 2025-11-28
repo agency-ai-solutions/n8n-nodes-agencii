@@ -27,8 +27,7 @@ export class AgenciiApi implements ICredentialType {
 
   test: ICredentialTestRequest = {
     request: {
-      // url: "https://api.agencii.ai/bearer",
-      url: "https://n8n-webhook-japboyzddq-uc.a.run.app",
+      url: "https://bearer-verification-japboyzddq-uc.a.run.app",
       method: "GET",
     },
   };
