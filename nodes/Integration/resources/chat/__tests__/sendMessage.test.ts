@@ -112,6 +112,29 @@ describe("Agencii Platform Integration - Send Message", () => {
       expect(sessionIdField?.routing?.send?.type).toBe("body");
       expect(sessionIdField?.routing?.send?.property).toBe("sessionId");
     });
+
+    it("should define userContext parameter as optional json type", () => {
+      const userContextField = chatDescription.find((prop) => prop.name === "userContext");
+
+      expect(userContextField).toBeDefined();
+      expect(userContextField?.required).toBeUndefined();
+      expect(userContextField?.type).toBe("json");
+      expect(userContextField?.default).toBe("{}");
+    });
+
+    it("should send userContext in request body as user_context", () => {
+      const userContextField = chatDescription.find((prop) => prop.name === "userContext");
+
+      expect(userContextField?.routing?.send?.type).toBe("body");
+      expect(userContextField?.routing?.send?.property).toBe("user_context");
+    });
+
+    it("should only show userContext field for sendMessage operation", () => {
+      const userContextField = chatDescription.find((prop) => prop.name === "userContext");
+
+      expect(userContextField?.displayOptions?.show?.operation).toEqual(["sendMessage"]);
+      expect(userContextField?.displayOptions?.show?.resource).toEqual(["chat"]);
+    });
   });
 
   describe("Response Normalization", () => {

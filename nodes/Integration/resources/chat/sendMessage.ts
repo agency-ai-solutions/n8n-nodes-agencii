@@ -75,4 +75,20 @@ export const chatSendMessageDescription: INodeProperties[] = [
       },
     },
   },
+  {
+    displayName: "User Context",
+    name: "userContext",
+    type: "json",
+    default: "{}",
+    displayOptions: {
+      show: showOnlyForChatSendMessage,
+    },
+    description: "Optional: A dictionary of additional context data to pass to the agency",
+    routing: {
+      send: {
+        type: "body",
+        property: "user_context",
+      },
+    },
+  },
 ];
