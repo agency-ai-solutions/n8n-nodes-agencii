@@ -49,11 +49,11 @@ jobs:
           npm version "${{ github.event.inputs.release_type }}" \
             -m "chore(release): %s [skip ci]"
 
-      - name: Push release commit and tag
-        run: git push origin HEAD --follow-tags
-
       - name: Publish package to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           RELEASE_MODE: "true"
         run: npm publish --access public
+
+      - name: Push release commit and tag
+        run: git push origin HEAD --follow-tags
